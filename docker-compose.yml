@@ -1,0 +1,52 @@
+version: "3"
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    platform: linux/amd64
+    environment:
+      - CLUSTER_NAME=test
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    volumes:
+      - namenode-data:/hadoop/dfs/namenode
+    ports:
+      - "9870:9870" # HDFS Web UI
+      - "8020:8020" # HDFS RPC
+    networks:
+      - hadoop
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    platform: linux/amd64
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+      - CLUSTER_NAME=test
+      - SERVICE_PRECONDITION=namenode:9870
+    volumes:
+      - datanode-data:/hadoop/dfs/datanode
+    ports:
+      - "9864:9864" # Datanode Web UI
+    networks:
+      - hadoop
+
+  hbase:
+    image: harisekhon/hbase
+    container_name: hbase
+    platform: linux/amd64
+    environment:
+      - SERVICE_PRECONDITION=namenode:9870 datanode:9864
+    networks:
+      - hadoop
+    ports:
+      - "16010:16010" # HBase Master UI
+      - "16000:16000" # HBase RPC
+      - "2181:2181" # Zookeeper
+
+networks:
+  hadoop:
+
+volumes:
+  namenode-data:
+  datanode-data:
